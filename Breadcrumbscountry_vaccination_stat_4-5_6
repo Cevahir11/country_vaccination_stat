@@ -1,0 +1,111 @@
+from collections import defaultdict
+from datetime import datetime
+
+# Veri kümesini oku ve işle
+def read_data(file_path):
+    data = defaultdict(int)
+    with open(file_path, 'r') as file:
+        for line in file:
+            country, date_str, daily_vaccinations, vaccine = line.strip().split(',')
+            date = datetime.strptime(date_str, '%m/%d/%Y')
+            data[(country, date)] += int(daily_vaccinations)
+    return data
+
+# Toplam aşı sayısını hesapla
+def total_vaccinations_by_country(data, country):
+    total_vaccinations = 0
+    for key in data:
+        if key[0] == country:
+            total_vaccinations += data[key]
+    return total_vaccinations
+
+# En fazla aşı yapılan günü bul
+def most_vaccinated_day_by_country(data, country):
+    max_vaccinations = 0
+    most_vaccinated_day = None
+    for key in data:
+        if key[0] == country and data[key] > max_vaccinations:
+            max_vaccinations = data[key]
+            most_vaccinated_day = key[1]
+    return most_vaccinated_day.strftime('%m/%d/%Y')
+
+# Veri dosyası yolu
+file_path = "veri_kumesi.txt"
+
+# Veriyi oku
+data = read_data(file_path)
+
+# Soruları yanıtla
+print("Argentina ülkesinde toplam aşı sayısı:", total_vaccinations_by_country(data, "Argentina"))
+print("Argentina ülkesinde en fazla aşı yapılan gün:", most_vaccinated_day_by_country(data, "Argentina"))
+
+
+
+
+4-Kod Uygulama Görevi: Ülke başına daily_vaccinations sütunundaki eksik verileri (imputasyon) ilgili ülkelerin minimum günlük aşılama sayısıyla doldurmak için kod uygulayın.   
+Not: Bir ülkenin henüz geçerli bir aşı numarası yoksa, bunu “0” (sıfır) ile doldurun. 
+Lütfen bu sorunun yanıtı olarak kodunuzun bağlantısını sağlayın.
+
+import pandas as pd
+
+# Veri kümesini oku
+df = pd.read_csv("veri_kumesi.txt", header=None, names=["Country", "Date", "Daily Vaccinations", "Vaccine"])
+
+# Eksik verileri doldur
+df["Daily Vaccinations"].fillna(0, inplace=True)
+
+# Ülkelerin minimum günlük aşılama sayısını bul
+min_daily_vaccinations = df.groupby("Country")["Daily Vaccinations"].min().reset_index()
+
+# Eksik verileri ilgili ülkelerin minimum günlük aşılama sayısıyla doldur
+df["Daily Vaccinations"] = df.apply(lambda row: min_daily_vaccinations[min_daily_vaccinations["Country"] == row["Country"]]["Daily Vaccinations"].values[0] if pd.isnull(row["Daily Vaccinations"]) else row["Daily Vaccinations"], axis=1)
+
+# İşlenmiş veriyi yaz
+df.to_csv("imputed_data.csv", index=False)
+
+5-Kod Uygulama Görevi: Ülke başına daily_vaccinations sütunundaki eksik verileri (imputasyon) ilgili ülkelerin minimum günlük aşılama sayısıyla doldurmak için kod uygulayın.   
+Not: Bir ülkenin henüz geçerli bir aşı numarası yoksa, bunu “0” (sıfır) ile doldurun. 
+Lütfen bu sorunun yanıtı olarak kodunuzun bağlantısını sağlayın.
+
+import pandas as pd
+
+# Veri kümesini oku
+df = pd.read_csv("veri_kumesi.txt", header=None, names=["Country", "Date", "Daily Vaccinations", "Vaccine"])
+
+# Eksik verileri ilgili ülkelerin minimum günlük aşılama sayısıyla doldur
+df["Daily Vaccinations"].fillna(0, inplace=True)
+min_daily_vaccinations = df.groupby("Country")["Daily Vaccinations"].min().reset_index()
+df = pd.merge(df, min_daily_vaccinations, on="Country", suffixes=("_original", ""))
+df["Daily Vaccinations"] = df["Daily Vaccinations"].fillna(df["Daily Vaccinations_original"])
+
+# Gereksiz sütunu kaldır
+df.drop(columns=["Daily Vaccinations_original"], inplace=True)
+
+# İşlenmiş veriyi yaz
+df.to_csv("imputed_data.csv", index=False)
+
+
+6-Kod Uygulama Görevi: Veri kümesinin eksik değerlerin atfedilen versiyonunu dikkate alarak, en yüksek ortalama günlük aşılama sayısına sahip ilk 3 ülkeyi listeleyen kodu uygulayın. 
+Lütfen bu sorunun yanıtı olarak kodunuzun bağlantısını sağlayın.
+import pandas as pd
+
+# Veri kümesini oku
+df = pd.read_csv("veri_kumesi.txt", header=None, names=["Country", "Date", "Daily Vaccinations", "Vaccine"])
+
+# Eksik verileri ilgili ülkelerin minimum günlük aşılama sayısıyla doldur
+df["Daily Vaccinations"].fillna(0, inplace=True)
+min_daily_vaccinations = df.groupby("Country")["Daily Vaccinations"].min().reset_index()
+df = pd.merge(df, min_daily_vaccinations, on="Country", suffixes=("_original", ""))
+df["Daily Vaccinations"] = df["Daily Vaccinations"].fillna(df["Daily Vaccinations_original"])
+df.drop(columns=["Daily Vaccinations_original"], inplace=True)
+
+# En yüksek ortalama günlük aşılama sayısına sahip ilk 3 ülkeyi bul
+top_countries = df.groupby("Country")["Daily Vaccinations"].mean().nlargest(3).reset_index()
+
+# Sonuçları yazdır
+print("En yüksek ortalama günlük aşılama sayısına sahip ilk 3 ülke:")
+for index, row in top_countries.iterrows():
+    print(f"{row['Country']}: {row['Daily Vaccinations']}")
+
+
+7-Veri setinin eksik değerlere atfedilen versiyonu dikkate alındığında 1/6/2021 (AA/GG/YYYY) tarihinde yapılan toplam aşılama sayısı nedir? Lütfen cevap olarak numarayı belirtin.8173
