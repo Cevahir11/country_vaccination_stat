@@ -109,3 +109,24 @@ for index, row in top_countries.iterrows():
 
 
 7-Veri setinin eksik değerlere atfedilen versiyonu dikkate alındığında 1/6/2021 (AA/GG/YYYY) tarihinde yapılan toplam aşılama sayısı nedir? Lütfen cevap olarak numarayı belirtin.8173
+8-Kod Uygulama Görevi: Eğer bu liste bir veri tabanı tablosu olacaksa, lütfen a sorusuna benzer şekilde eksik günlük aşı sayılarını ülkenin ayrık medyanı ile doldurmak için SQL sorgusu sağlayın.   
+Lütfen bu sorunun yanıtı olarak kodunuzun bağlantısını sağlayın. 
+Not: Bu sefer SQL eşdeğeri isteniyor ve atama değeri minimum değil, her ülkenin medyanıdır. Lütfen Kuveyt gibi geçerli günlük aşı kayıtları olmayan ülkeleri sıfırla doldurmayı unutmayın.  
+WITH CountryMedians AS (
+  SELECT
+    Country,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY "Daily Vaccinations") AS MedianVaccinations
+  FROM
+    VaccinationData
+  GROUP BY
+    Country
+)
+
+UPDATE
+  VaccinationData
+SET
+  "Daily Vaccinations" = COALESCE("Daily Vaccinations", CountryMedians.MedianVaccinations)
+FROM
+  CountryMedians
+WHERE
+  VaccinationData.Country = CountryMedians.Country;
